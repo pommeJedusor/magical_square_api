@@ -85,7 +85,7 @@ def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
         grid |= 1 << move
         all_moves.append(str(move))
 
-        if not loosing_hashtable.get(get_hash(grid, move)) or is_position_valid(grid, move):
+        if not loosing_hashtable.get(get_hash(grid, move)) and is_position_valid(grid, move):
             result = dfs(grid, move, all_moves, depth+1)
             if result:return True
 
