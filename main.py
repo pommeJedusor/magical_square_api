@@ -37,11 +37,6 @@ def is_position_valid(grid:int, last_move:int)->bool:
             return False
     return is_dfs_valid(grid, moves)
 
-def is_valid_index(index:int)->bool:
-    if index < 0:return False
-    if index >= DIGITS_NUMBER:return False
-    return True
-
 def show_grid(all_moves:list[str]):
     positions = {}
     for i in range(len(all_moves)):
@@ -58,21 +53,21 @@ def show_grid(all_moves:list[str]):
 
 def get_moves(grid:int, index:int)->list[int]:
     indexes = []
-    if is_valid_index(index+HORIZONTAL_DISTANCE) and index%WIDTH < 7 and not grid & 1 << (index+HORIZONTAL_DISTANCE):
+    if index+HORIZONTAL_DISTANCE < DIGITS_NUMBER and index%WIDTH < 7 and not grid & 1 << (index+HORIZONTAL_DISTANCE):
         indexes.append(index+HORIZONTAL_DISTANCE)
-    if is_valid_index(index-HORIZONTAL_DISTANCE) and index%WIDTH > 2 and not grid & 1 << (index-HORIZONTAL_DISTANCE):
+    if index-HORIZONTAL_DISTANCE >= 0 and index%WIDTH > 2 and not grid & 1 << (index-HORIZONTAL_DISTANCE):
         indexes.append(index-HORIZONTAL_DISTANCE)
-    if is_valid_index(index+VERTICAL_DISTANCE) and not grid & 1 << (index+VERTICAL_DISTANCE):
+    if index+VERTICAL_DISTANCE < DIGITS_NUMBER and not grid & 1 << (index+VERTICAL_DISTANCE):
         indexes.append(index+VERTICAL_DISTANCE)
-    if is_valid_index(index-VERTICAL_DISTANCE) and not grid & 1 << (index-VERTICAL_DISTANCE):
+    if index-VERTICAL_DISTANCE >= 0 and not grid & 1 << (index-VERTICAL_DISTANCE):
         indexes.append(index-VERTICAL_DISTANCE)
-    if is_valid_index(index+TOPLEFT_BOTTOMRIGHT) and index%WIDTH < 8 and not grid & 1 << (index+TOPLEFT_BOTTOMRIGHT):
+    if index+TOPLEFT_BOTTOMRIGHT < DIGITS_NUMBER and index%WIDTH < 8 and not grid & 1 << (index+TOPLEFT_BOTTOMRIGHT):
         indexes.append(index+TOPLEFT_BOTTOMRIGHT)
-    if is_valid_index(index-TOPLEFT_BOTTOMRIGHT) and index%WIDTH > 1 and not grid & 1 << (index-TOPLEFT_BOTTOMRIGHT):
+    if index-TOPLEFT_BOTTOMRIGHT >= 0 and index%WIDTH > 1 and not grid & 1 << (index-TOPLEFT_BOTTOMRIGHT):
         indexes.append(index-TOPLEFT_BOTTOMRIGHT)
-    if is_valid_index(index+BOTTOMLEFT_TOPRIGHT) and index%WIDTH < 8 and not grid & 1 << (index+BOTTOMLEFT_TOPRIGHT):
+    if index+BOTTOMLEFT_TOPRIGHT >= 0 and index%WIDTH < 8 and not grid & 1 << (index+BOTTOMLEFT_TOPRIGHT):
         indexes.append(index+BOTTOMLEFT_TOPRIGHT)
-    if is_valid_index(index-BOTTOMLEFT_TOPRIGHT) and index%WIDTH > 1 and not grid & 1 << (index-BOTTOMLEFT_TOPRIGHT):
+    if index-BOTTOMLEFT_TOPRIGHT < DIGITS_NUMBER and index%WIDTH > 1 and not grid & 1 << (index-BOTTOMLEFT_TOPRIGHT):
         indexes.append(index-BOTTOMLEFT_TOPRIGHT)
     return indexes
     
@@ -82,7 +77,7 @@ def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
     if depth > max_depth:max_depth = depth
     print(depth, max_depth)
 
-    if depth == 96 + 1:
+    if depth == 90 + 1:
         show_grid(all_moves)
         return True
 
