@@ -7,11 +7,15 @@ TOPLEFT_BOTTOMRIGHT = 2 + 2 * WIDTH
 BOTTOMLEFT_TOPRIGHT = 2 - 2 * WIDTH
 
 max_depth = 0
+loosing_hashtable = {}
 
-def is_dfs_valid(grid:list[int], last_move:int)->bool:
+def get_hash(grid:int, index:int):
+    return grid | 1 << index
+
+def is_dfs_valid(grid:int, last_move:int)->bool:
     zeros = []
-    for i in range(grid):
-        if not grid[i]:
+    for i in range(DIGITS_NUMBER):
+        if not grid & 1 << i:
             zeros.append(i)
     nb_linked = 0
     explored = {}
@@ -26,30 +30,31 @@ def is_dfs_valid(grid:list[int], last_move:int)->bool:
                 nb_linked += 1
     return nb_linked == len(zeros)
 
-def is_position_valid(grid:list[int], last_move:int)->bool:
+def is_position_valid(grid:int, last_move:int)->bool:
     moves = get_moves(grid, last_move)
     for move in moves:
         if not get_moves(grid, move):
             return False
-    return True
+    return is_dfs_valid(grid, moves)
 
 def is_valid_index(index:int)->bool:
     if index < 0:return False
     if index >= DIGITS_NUMBER:return False
     return True
 
-def show_grid(grid:list[int]):
+def show_grid(letters:list[str]):
     for i in range(HEIGHT):
         str_line = ""
         for j in range(WIDTH):
-            letter = str(grid[i*WIDTH + j])
+            letter = letters[i * WIDTH + j]
             if len(letter) == 1:letter = "  " + letter
             elif len(letter) == 2:letter = " " + letter
             str_line += " " + letter + " "
         print(str_line)
 
-def get_moves(grid:list[int], index:int)->list[int]:
+def get_moves(grid:int, index:int)->list[int]:
     indexes = [
+
         (index+HORIZONTAL_DISTANCE, lambda x: x%WIDTH < 7),
         (index-HORIZONTAL_DISTANCE, lambda x: x%WIDTH > 2),
         (index+VERTICAL_DISTANCE, lambda x: True),
@@ -59,32 +64,39 @@ def get_moves(grid:list[int], index:int)->list[int]:
         (index+BOTTOMLEFT_TOPRIGHT, lambda x: x%WIDTH < 8),
         (index-BOTTOMLEFT_TOPRIGHT, lambda x: x%WIDTH > 1),
     ]
-    indexes = filter(lambda x: is_valid_index(x[0]) and x[1](index) and not grid[x[0]], indexes)
+    indexes = filter(lambda x: is_valid_index(x[0]) and x[1](index) and not grid & 1 << x[0], indexes)
     return [index[0] for index in indexes]
     
-def dfs(grid:list[int], index:int, depth:int=2)->bool:
-    global max_depth
+def dfs(grid:int, index:int, letters:list[str], depth:int=2)->bool:
+    global max_depth, loosing_hashtable
+
     if depth > max_depth:max_depth = depth
     print(depth, max_depth)
 
     if depth == 100 + 1:
-        show_grid(grid)
+        show_grid(letters)
         return True
 
     for move in get_moves(grid, index):
-        grid[move] = depth
+        grid |= 1 << move
+        letters.append(str(move))
 
-        if is_position_valid(grid, move):
-            result = dfs(grid, move, depth+1)
+        if not loosing_hashtable.get(get_hash(grid, move)) or is_position_valid(grid, move):
+            result = dfs(grid, move, letters, depth+1)
             if result:return True
 
-        grid[move] = 0
+        # save the position as loosing
+        loosing_hashtable[get_hash(grid, move)] = True
+
+        letters.pop(-1)
+        grid ^= 1 << move
 
     return False
 
 
 if __name__ == "__main__":
-    grid = [0 for i in range(DIGITS_NUMBER)]
+    grid = 0
     index = 0
-    grid[index] = 1
-    dfs(grid, 0)
+    grid |= 1 << index
+    letters = []
+    dfs(grid, 0, letters)
