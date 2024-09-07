@@ -57,19 +57,24 @@ def show_grid(all_moves:list[str]):
         print(str_line)
 
 def get_moves(grid:int, index:int)->list[int]:
-    indexes = [
-
-        (index+HORIZONTAL_DISTANCE, lambda x: x%WIDTH < 7),
-        (index-HORIZONTAL_DISTANCE, lambda x: x%WIDTH > 2),
-        (index+VERTICAL_DISTANCE, lambda x: True),
-        (index-VERTICAL_DISTANCE, lambda x: True),
-        (index+TOPLEFT_BOTTOMRIGHT, lambda x: x%WIDTH < 8),
-        (index-TOPLEFT_BOTTOMRIGHT, lambda x: x%WIDTH > 1),
-        (index+BOTTOMLEFT_TOPRIGHT, lambda x: x%WIDTH < 8),
-        (index-BOTTOMLEFT_TOPRIGHT, lambda x: x%WIDTH > 1),
-    ]
-    indexes = filter(lambda x: is_valid_index(x[0]) and x[1](index) and not grid & 1 << x[0], indexes)
-    return [index[0] for index in indexes]
+    indexes = []
+    if is_valid_index(index+HORIZONTAL_DISTANCE) and index%WIDTH < 7 and not grid & 1 << (index+HORIZONTAL_DISTANCE):
+        indexes.append(index+HORIZONTAL_DISTANCE)
+    if is_valid_index(index-HORIZONTAL_DISTANCE) and index%WIDTH > 2 and not grid & 1 << (index-HORIZONTAL_DISTANCE):
+        indexes.append(index-HORIZONTAL_DISTANCE)
+    if is_valid_index(index+VERTICAL_DISTANCE) and not grid & 1 << (index+VERTICAL_DISTANCE):
+        indexes.append(index+VERTICAL_DISTANCE)
+    if is_valid_index(index-VERTICAL_DISTANCE) and not grid & 1 << (index-VERTICAL_DISTANCE):
+        indexes.append(index-VERTICAL_DISTANCE)
+    if is_valid_index(index+TOPLEFT_BOTTOMRIGHT) and index%WIDTH < 8 and not grid & 1 << (index+TOPLEFT_BOTTOMRIGHT):
+        indexes.append(index+TOPLEFT_BOTTOMRIGHT)
+    if is_valid_index(index-TOPLEFT_BOTTOMRIGHT) and index%WIDTH > 1 and not grid & 1 << (index-TOPLEFT_BOTTOMRIGHT):
+        indexes.append(index-TOPLEFT_BOTTOMRIGHT)
+    if is_valid_index(index+BOTTOMLEFT_TOPRIGHT) and index%WIDTH < 8 and not grid & 1 << (index+BOTTOMLEFT_TOPRIGHT):
+        indexes.append(index+BOTTOMLEFT_TOPRIGHT)
+    if is_valid_index(index-BOTTOMLEFT_TOPRIGHT) and index%WIDTH > 1 and not grid & 1 << (index-BOTTOMLEFT_TOPRIGHT):
+        indexes.append(index-BOTTOMLEFT_TOPRIGHT)
+    return indexes
     
 def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
     global max_depth, loosing_hashtable
