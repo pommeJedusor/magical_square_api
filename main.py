@@ -6,6 +6,8 @@ VERTICAL_DISTANCE = WIDTH * HORIZONTAL_DISTANCE
 TOPLEFT_BOTTOMRIGHT = 2 + 2 * WIDTH
 BOTTOMLEFT_TOPRIGHT = 2 - 2 * WIDTH
 
+max_depth = 0
+
 def is_valid_index(index:int)->bool:
     if index < 0:return False
     if index >= DIGITS_NUMBER:return False
@@ -36,9 +38,11 @@ def get_moves(grid:list[int], index:int)->list[int]:
     return [index[0] for index in indexes]
     
 def dfs(grid:list[int], index:int, depth:int=2)->bool:
-    print(depth)
+    global max_depth
+    if depth > max_depth:max_depth = depth
+    print(depth, max_depth)
 
-    if depth == 101:
+    if depth == 88:
         show_grid(grid)
         return True
 
