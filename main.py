@@ -8,6 +8,12 @@ BOTTOMLEFT_TOPRIGHT = 2 - 2 * WIDTH
 
 max_depth = 0
 
+def is_position_valid(grid:list[int], last_move:int)->bool:
+    for move in get_moves(grid, last_move):
+        if not get_moves(grid, move):
+            return False
+    return True
+
 def is_valid_index(index:int)->bool:
     if index < 0:return False
     if index >= DIGITS_NUMBER:return False
@@ -42,15 +48,16 @@ def dfs(grid:list[int], index:int, depth:int=2)->bool:
     if depth > max_depth:max_depth = depth
     print(depth, max_depth)
 
-    if depth == 88:
+    if depth == 100 + 1:
         show_grid(grid)
         return True
 
     for move in get_moves(grid, index):
         grid[move] = depth
 
-        result = dfs(grid, move, depth+1)
-        if result:return True
+        if is_position_valid(grid, move):
+            result = dfs(grid, move, depth+1)
+            if result:return True
 
         grid[move] = 0
 
