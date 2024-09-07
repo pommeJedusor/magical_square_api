@@ -8,8 +8,27 @@ BOTTOMLEFT_TOPRIGHT = 2 - 2 * WIDTH
 
 max_depth = 0
 
+def is_dfs_valid(grid:list[int], last_move:int)->bool:
+    zeros = []
+    for i in range(grid):
+        if not grid[i]:
+            zeros.append(i)
+    nb_linked = 0
+    explored = {}
+    unexplored = [zeros[0]]
+    while unexplored:
+        node = unexplored.pop(-1)
+        moves = get_moves(grid, node)
+        for move in moves:
+            if not explored.get(move):
+                unexplored.append(move)
+                explored[move] = True
+                nb_linked += 1
+    return nb_linked == len(zeros)
+
 def is_position_valid(grid:list[int], last_move:int)->bool:
-    for move in get_moves(grid, last_move):
+    moves = get_moves(grid, last_move)
+    for move in moves:
         if not get_moves(grid, move):
             return False
     return True
