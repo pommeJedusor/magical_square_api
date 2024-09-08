@@ -8,6 +8,7 @@ BOTTOMLEFT_TOPRIGHT = 2 - 2 * WIDTH
 
 max_depth = 0
 loosing_hashtable = {}
+solutions = []
 
 def is_subgrid_horizontal_line_filled(grid:int, index:int)->bool:
     y = index - index % WIDTH
@@ -56,11 +57,12 @@ def is_position_valid(grid:int, last_move:int)->bool:
             return False
     return is_dfs_valid(grid, moves)
 
-def show_grid(all_moves:list[str]):
+def show_grid(all_moves:list[str])->str:
     positions = {}
     for i in range(len(all_moves)):
         positions[all_moves[i]] = str(i+1)
 
+    str_grid = ""
     for i in range(HEIGHT):
         str_line = ""
         for j in range(WIDTH):
@@ -68,7 +70,8 @@ def show_grid(all_moves:list[str]):
             if len(move) == 1:move = "  " + move
             elif len(move) == 2:move = " " + move
             str_line += " " + move + " "
-        print(str_line)
+        str_grid += str_line+"\n"
+    return str_grid
 
 def get_moves(grid:int, index:int, unperfect=False)->list[int]:
     indexes = []
@@ -96,27 +99,23 @@ def get_moves(grid:int, index:int, unperfect=False)->list[int]:
     return indexes
     
 def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
-    global max_depth, loosing_hashtable
-
-    if depth > max_depth:
-        max_depth = depth
-        print(max_depth)
-        show_grid(all_moves)
+    global max_depth, loosing_hashtable, solutions
 
     if depth == 100 + 1:
-        show_grid(all_moves)
+        solutions.append(all_moves.copy())
         return True
 
     for move in get_moves(grid, index, unperfect=True):
         grid |= 1 << move
         all_moves.append(str(move))
 
+        result = False
         if not loosing_hashtable.get(get_hash(grid, move)) and (depth > 97 or is_position_valid(grid, move)):
             result = dfs(grid, move, all_moves, depth+1)
-            if result:return True
 
         # save the position as loosing
-        loosing_hashtable[get_hash(grid, move)] = (grid, move)
+        if not result:
+            loosing_hashtable[get_hash(grid, move)] = (grid, move)
 
         all_moves.pop(-1)
         grid ^= 1 << move
@@ -126,3 +125,10 @@ def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
 
 if __name__ == "__main__":
     dfs(1, 0, ["0"])
+    text = f"-- all solutions ({len(solutions)}) --\n"
+    for i in range(len(solutions)):
+        text += f"# solution {i+1}:\n"
+        text += show_grid(solutions[i])
+    print(text)
+    with open("./solutions.txt", "w", encoding="utf8") as f:
+        f.write(text)
