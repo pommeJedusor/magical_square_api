@@ -32,31 +32,6 @@ def is_sub_grid_filled(grid:int, index:int)->bool:
 def get_hash(grid:int, index:int)->int:
     return grid | index << 100
 
-def is_dfs_valid(grid:int, last_move:int)->bool:
-    zeros = []
-    for i in range(DIGITS_NUMBER):
-        if not grid & 1 << i:
-            zeros.append(i)
-    nb_linked = 0
-    explored = {}
-    unexplored = [zeros[0]]
-    while unexplored:
-        node = unexplored.pop(-1)
-        moves = get_moves(grid, node)
-        for move in moves:
-            if not explored.get(move):
-                unexplored.append(move)
-                explored[move] = True
-                nb_linked += 1
-    return nb_linked == len(zeros)
-
-def is_position_valid(grid:int, last_move:int)->bool:
-    moves = get_moves(grid, last_move)
-    for move in moves:
-        if not get_moves(grid, move):
-            return False
-    return is_dfs_valid(grid, moves)
-
 def show_grid(all_moves:list[str])->str:
     positions = {}
     for i in range(len(all_moves)):
@@ -110,7 +85,7 @@ def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
         all_moves.append(str(move))
 
         result = False
-        if not loosing_hashtable.get(get_hash(grid, move)) and (depth > 97 or is_position_valid(grid, move)):
+        if not loosing_hashtable.get(get_hash(grid, move)):
             result = dfs(grid, move, all_moves, depth+1)
 
         # save the position as loosing
