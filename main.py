@@ -9,8 +9,27 @@ BOTTOMLEFT_TOPRIGHT = 2 - 2 * WIDTH
 max_depth = 0
 loosing_hashtable = {}
 
-def get_hash(grid:int, index:int):
-    return grid | 1 << index
+def is_subgrid_horizontal_line_filled(grid:int, index:int)->bool:
+    y = index - index % WIDTH
+    x = (index % WIDTH % HORIZONTAL_DISTANCE)
+    while x < WIDTH:
+        if not grid & 1 << (y+x):
+            return False
+        x += HORIZONTAL_DISTANCE
+
+    return True
+
+def is_sub_grid_filled(grid:int, index:int)->bool:
+    index %= VERTICAL_DISTANCE
+    while (index < DIGITS_NUMBER):
+        if not is_subgrid_horizontal_line_filled(grid, index):
+            return False
+        index += VERTICAL_DISTANCE
+        
+    return True
+
+def get_hash(grid:int, index:int)->int:
+    return grid | index << 100
 
 def is_dfs_valid(grid:int, last_move:int)->bool:
     zeros = []
@@ -51,46 +70,53 @@ def show_grid(all_moves:list[str]):
             str_line += " " + move + " "
         print(str_line)
 
-def get_moves(grid:int, index:int)->list[int]:
+def get_moves(grid:int, index:int, unperfect=False)->list[int]:
     indexes = []
-    if index+HORIZONTAL_DISTANCE < DIGITS_NUMBER and index%WIDTH < 7 and not grid & 1 << (index+HORIZONTAL_DISTANCE):
-        indexes.append(index+HORIZONTAL_DISTANCE)
-    if index-HORIZONTAL_DISTANCE >= 0 and index%WIDTH > 2 and not grid & 1 << (index-HORIZONTAL_DISTANCE):
-        indexes.append(index-HORIZONTAL_DISTANCE)
-    if index+VERTICAL_DISTANCE < DIGITS_NUMBER and not grid & 1 << (index+VERTICAL_DISTANCE):
-        indexes.append(index+VERTICAL_DISTANCE)
-    if index-VERTICAL_DISTANCE >= 0 and not grid & 1 << (index-VERTICAL_DISTANCE):
-        indexes.append(index-VERTICAL_DISTANCE)
-    if index+TOPLEFT_BOTTOMRIGHT < DIGITS_NUMBER and index%WIDTH < 8 and not grid & 1 << (index+TOPLEFT_BOTTOMRIGHT):
-        indexes.append(index+TOPLEFT_BOTTOMRIGHT)
-    if index-TOPLEFT_BOTTOMRIGHT >= 0 and index%WIDTH > 1 and not grid & 1 << (index-TOPLEFT_BOTTOMRIGHT):
-        indexes.append(index-TOPLEFT_BOTTOMRIGHT)
-    if index+BOTTOMLEFT_TOPRIGHT >= 0 and index%WIDTH < 8 and not grid & 1 << (index+BOTTOMLEFT_TOPRIGHT):
-        indexes.append(index+BOTTOMLEFT_TOPRIGHT)
-    if index-BOTTOMLEFT_TOPRIGHT < DIGITS_NUMBER and index%WIDTH > 1 and not grid & 1 << (index-BOTTOMLEFT_TOPRIGHT):
-        indexes.append(index-BOTTOMLEFT_TOPRIGHT)
+    if unperfect:sub_grid_filled = is_sub_grid_filled(grid, index)
+
+    if not unperfect or not sub_grid_filled:
+        if index+HORIZONTAL_DISTANCE < DIGITS_NUMBER and index%WIDTH < 7 and not grid & 1 << (index+HORIZONTAL_DISTANCE):
+            indexes.append(index+HORIZONTAL_DISTANCE)
+        if index-HORIZONTAL_DISTANCE >= 0 and index%WIDTH > 2 and not grid & 1 << (index-HORIZONTAL_DISTANCE):
+            indexes.append(index-HORIZONTAL_DISTANCE)
+        if index+VERTICAL_DISTANCE < DIGITS_NUMBER and not grid & 1 << (index+VERTICAL_DISTANCE):
+            indexes.append(index+VERTICAL_DISTANCE)
+        if index-VERTICAL_DISTANCE >= 0 and not grid & 1 << (index-VERTICAL_DISTANCE):
+            indexes.append(index-VERTICAL_DISTANCE)
+    if not unperfect or sub_grid_filled:
+        if index+TOPLEFT_BOTTOMRIGHT < DIGITS_NUMBER and index%WIDTH < 8 and not grid & 1 << (index+TOPLEFT_BOTTOMRIGHT):
+            indexes.append(index+TOPLEFT_BOTTOMRIGHT)
+        if index-TOPLEFT_BOTTOMRIGHT >= 0 and index%WIDTH > 1 and not grid & 1 << (index-TOPLEFT_BOTTOMRIGHT):
+            indexes.append(index-TOPLEFT_BOTTOMRIGHT)
+        if index+BOTTOMLEFT_TOPRIGHT >= 0 and index%WIDTH < 8 and not grid & 1 << (index+BOTTOMLEFT_TOPRIGHT):
+            indexes.append(index+BOTTOMLEFT_TOPRIGHT)
+        if index-BOTTOMLEFT_TOPRIGHT < DIGITS_NUMBER and index%WIDTH > 1 and not grid & 1 << (index-BOTTOMLEFT_TOPRIGHT):
+            indexes.append(index-BOTTOMLEFT_TOPRIGHT)
+
     return indexes
     
 def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
     global max_depth, loosing_hashtable
 
-    if depth > max_depth:max_depth = depth
-    print(depth, max_depth)
+    if depth > max_depth:
+        max_depth = depth
+        print(max_depth)
+        show_grid(all_moves)
 
-    if depth == 90 + 1:
+    if depth == 100 + 1:
         show_grid(all_moves)
         return True
 
-    for move in get_moves(grid, index):
+    for move in get_moves(grid, index, unperfect=True):
         grid |= 1 << move
         all_moves.append(str(move))
 
-        if not loosing_hashtable.get(get_hash(grid, move)) and is_position_valid(grid, move):
+        if not loosing_hashtable.get(get_hash(grid, move)) and (depth > 97 or is_position_valid(grid, move)):
             result = dfs(grid, move, all_moves, depth+1)
             if result:return True
 
         # save the position as loosing
-        loosing_hashtable[get_hash(grid, move)] = True
+        loosing_hashtable[get_hash(grid, move)] = (grid, move)
 
         all_moves.pop(-1)
         grid ^= 1 << move
@@ -99,8 +125,4 @@ def dfs(grid:int, index:int, all_moves:list[str], depth:int=2)->bool:
 
 
 if __name__ == "__main__":
-    grid = 0
-    index = 0
-    grid |= 1 << index
-    all_moves = ["0"]
-    dfs(grid, 0, all_moves)
+    dfs(1, 0, ["0"])
