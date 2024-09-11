@@ -92,7 +92,7 @@ def get_moves(grid: int, index: int) -> list[int]:
     sub_grid_filled = is_sub_grid_filled(grid, index)
 
     # wait until the subgrid is filled to move to the next subgrid
-    # it might prune some solutions but it allow to really fastly find 60 solutions
+    # it might prune some solutions but it allow to really fastly find a lot of solutions
     # return horizontal and vertical if subgrid not filled and diagonal otherwise
     if sub_grid_filled:
         if (
@@ -148,10 +148,13 @@ def get_moves(grid: int, index: int) -> list[int]:
 
 def solve(grid: int, index: int, played_moves: list[str], depth: int = 2) -> bool:
     global loosing_hashtable, solutions
+    is_winning = False
 
     # if grid is full
     if depth == DIGITS_NUMBER + 1:
         solutions.append(played_moves.copy())
+        print(show_grid(solutions[-1]))
+        print(len(solutions))
         return True
 
     for move in get_moves(grid, index):
@@ -167,12 +170,14 @@ def solve(grid: int, index: int, played_moves: list[str], depth: int = 2) -> boo
         # save the position as loosing
         if not result:
             loosing_hashtable[get_hash(grid, move)] = (grid, move)
+        else:
+            is_winning = True
 
         # cancel the move
         played_moves.pop(-1)
         grid ^= 1 << move
 
-    return False
+    return is_winning
 
 
 if __name__ == "__main__":
