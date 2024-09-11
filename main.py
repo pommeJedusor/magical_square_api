@@ -146,12 +146,12 @@ def get_moves(grid: int, index: int) -> list[int]:
     return indexes
 
 
-def solve(grid: int, index: int, played_moves: list[str], depth: int = 2) -> bool:
+def solve(grid: int, index: int, played_moves: list[str]) -> bool:
     global loosing_hashtable, solutions
     is_winning = False
 
     # if grid is full
-    if depth == DIGITS_NUMBER + 1:
+    if len(played_moves) == DIGITS_NUMBER:
         solutions.append(played_moves.copy())
         print(show_grid(solutions[-1]))
         print(len(solutions))
@@ -165,7 +165,7 @@ def solve(grid: int, index: int, played_moves: list[str], depth: int = 2) -> boo
         result = False
         # go deeper if the position doesn't match any previous loosing position explored
         if not loosing_hashtable.get(get_hash(grid, move)):
-            result = solve(grid, move, played_moves, depth + 1)
+            result = solve(grid, move, played_moves)
 
         # save the position as loosing
         if not result:
