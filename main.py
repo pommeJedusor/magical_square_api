@@ -14,7 +14,6 @@ TO_BOTTOM_LEFT_OFFSET = Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 TO_TOP_RIGHT_OFFSET = -Y_DIAGONAL_OFFSET + X_DIAGONAL_OFFSET
 TO_TOP_LEFT_OFFSET = -Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 
-max_depth = 0
 loosing_hashtable = {}
 solutions = []
 
@@ -121,7 +120,7 @@ def get_moves(grid: int, index: int, unperfect=False) -> list[int]:
 
 
 def dfs(grid: int, index: int, played_moves: list[str], depth: int = 2) -> bool:
-    global max_depth, loosing_hashtable, solutions
+    global loosing_hashtable, solutions
 
     if depth == 100 + 1:
         solutions.append(played_moves.copy())
