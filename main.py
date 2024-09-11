@@ -1,10 +1,18 @@
 WIDTH = 10
 HEIGHT = 10
 DIGITS_NUMBER = 100
-HORIZONTAL_DISTANCE = 3
-VERTICAL_DISTANCE = WIDTH * HORIZONTAL_DISTANCE
-TOPLEFT_BOTTOMRIGHT = 2 + 2 * WIDTH
-BOTTOMLEFT_TOPRIGHT = 2 - 2 * WIDTH
+HORIZONTAL_OFFSET = 3
+VERTICAL_OFFSET = 30
+Y_DIAGONAL_OFFSET = 20
+X_DIAGONAL_OFFSET = 2
+TO_RIGHT_OFFSET = HORIZONTAL_OFFSET
+TO_LEFT_OFFSET = -HORIZONTAL_OFFSET
+TO_BOTTOM_OFFSET = VERTICAL_OFFSET
+TO_TOP_OFFSET = -VERTICAL_OFFSET
+TO_BOTTOM_RIGHT_OFFSET = Y_DIAGONAL_OFFSET + X_DIAGONAL_OFFSET
+TO_BOTTOM_LEFT_OFFSET = Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
+TO_TOP_RIGHT_OFFSET = -Y_DIAGONAL_OFFSET + X_DIAGONAL_OFFSET
+TO_TOP_LEFT_OFFSET = -Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 
 max_depth = 0
 loosing_hashtable = {}
@@ -13,21 +21,21 @@ solutions = []
 
 def is_subgrid_horizontal_line_filled(grid: int, index: int) -> bool:
     y = index - index % WIDTH
-    x = index % WIDTH % HORIZONTAL_DISTANCE
+    x = index % WIDTH % HORIZONTAL_OFFSET
     while x < WIDTH:
         if not grid & 1 << (y + x):
             return False
-        x += HORIZONTAL_DISTANCE
+        x += HORIZONTAL_OFFSET
 
     return True
 
 
 def is_sub_grid_filled(grid: int, index: int) -> bool:
-    index %= VERTICAL_DISTANCE
+    index %= VERTICAL_OFFSET
     while index < DIGITS_NUMBER:
         if not is_subgrid_horizontal_line_filled(grid, index):
             return False
-        index += VERTICAL_DISTANCE
+        index += VERTICAL_OFFSET
 
     return True
 
@@ -61,51 +69,53 @@ def get_moves(grid: int, index: int, unperfect=False) -> list[int]:
     sub_grid_filled = not unperfect or is_sub_grid_filled(grid, index)
 
     if not unperfect or not sub_grid_filled:
+        # right
         if (
-            index + HORIZONTAL_DISTANCE < DIGITS_NUMBER
+            index + HORIZONTAL_OFFSET < DIGITS_NUMBER
             and index % WIDTH < 7
-            and not grid & 1 << (index + HORIZONTAL_DISTANCE)
+            and not grid & 1 << (index + HORIZONTAL_OFFSET)
         ):
-            indexes.append(index + HORIZONTAL_DISTANCE)
+            indexes.append(index + HORIZONTAL_OFFSET)
+        # left
         if (
-            index - HORIZONTAL_DISTANCE >= 0
+            index - HORIZONTAL_OFFSET >= 0
             and index % WIDTH > 2
-            and not grid & 1 << (index - HORIZONTAL_DISTANCE)
+            and not grid & 1 << (index - HORIZONTAL_OFFSET)
         ):
-            indexes.append(index - HORIZONTAL_DISTANCE)
-        if index + VERTICAL_DISTANCE < DIGITS_NUMBER and not grid & 1 << (
-            index + VERTICAL_DISTANCE
+            indexes.append(index - HORIZONTAL_OFFSET)
+        # down
+        if index + VERTICAL_OFFSET < DIGITS_NUMBER and not grid & 1 << (
+            index + VERTICAL_OFFSET
         ):
-            indexes.append(index + VERTICAL_DISTANCE)
-        if index - VERTICAL_DISTANCE >= 0 and not grid & 1 << (
-            index - VERTICAL_DISTANCE
-        ):
-            indexes.append(index - VERTICAL_DISTANCE)
+            indexes.append(index + VERTICAL_OFFSET)
+        # up
+        if index - VERTICAL_OFFSET >= 0 and not grid & 1 << (index - VERTICAL_OFFSET):
+            indexes.append(index - VERTICAL_OFFSET)
     if not unperfect or sub_grid_filled:
         if (
-            index + TOPLEFT_BOTTOMRIGHT < DIGITS_NUMBER
+            index + TO_BOTTOM_RIGHT_OFFSET < DIGITS_NUMBER
             and index % WIDTH < 8
-            and not grid & 1 << (index + TOPLEFT_BOTTOMRIGHT)
+            and not grid & 1 << (index + TO_BOTTOM_RIGHT_OFFSET)
         ):
-            indexes.append(index + TOPLEFT_BOTTOMRIGHT)
+            indexes.append(index + TO_BOTTOM_RIGHT_OFFSET)
         if (
-            index - TOPLEFT_BOTTOMRIGHT >= 0
+            index - TO_BOTTOM_RIGHT_OFFSET >= 0
             and index % WIDTH > 1
-            and not grid & 1 << (index - TOPLEFT_BOTTOMRIGHT)
+            and not grid & 1 << (index - TO_BOTTOM_RIGHT_OFFSET)
         ):
-            indexes.append(index - TOPLEFT_BOTTOMRIGHT)
+            indexes.append(index - TO_BOTTOM_RIGHT_OFFSET)
         if (
-            index + BOTTOMLEFT_TOPRIGHT >= 0
+            index + TO_TOP_RIGHT_OFFSET >= 0
             and index % WIDTH < 8
-            and not grid & 1 << (index + BOTTOMLEFT_TOPRIGHT)
+            and not grid & 1 << (index + TO_TOP_RIGHT_OFFSET)
         ):
-            indexes.append(index + BOTTOMLEFT_TOPRIGHT)
+            indexes.append(index + TO_TOP_RIGHT_OFFSET)
         if (
-            index - BOTTOMLEFT_TOPRIGHT < DIGITS_NUMBER
+            index - TO_TOP_RIGHT_OFFSET < DIGITS_NUMBER
             and index % WIDTH > 1
-            and not grid & 1 << (index - BOTTOMLEFT_TOPRIGHT)
+            and not grid & 1 << (index - TO_TOP_RIGHT_OFFSET)
         ):
-            indexes.append(index - BOTTOMLEFT_TOPRIGHT)
+            indexes.append(index - TO_TOP_RIGHT_OFFSET)
 
     return indexes
 
