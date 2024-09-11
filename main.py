@@ -36,10 +36,10 @@ def get_hash(grid: int, index: int) -> int:
     return grid | index << 100
 
 
-def show_grid(all_moves: list[str]) -> str:
+def show_grid(played_moves: list[str]) -> str:
     positions = {}
-    for i in range(len(all_moves)):
-        positions[all_moves[i]] = str(i + 1)
+    for i in range(len(played_moves)):
+        positions[played_moves[i]] = str(i + 1)
 
     str_grid = ""
     for i in range(HEIGHT):
@@ -110,26 +110,26 @@ def get_moves(grid: int, index: int, unperfect=False) -> list[int]:
     return indexes
 
 
-def dfs(grid: int, index: int, all_moves: list[str], depth: int = 2) -> bool:
+def dfs(grid: int, index: int, played_moves: list[str], depth: int = 2) -> bool:
     global max_depth, loosing_hashtable, solutions
 
     if depth == 100 + 1:
-        solutions.append(all_moves.copy())
+        solutions.append(played_moves.copy())
         return True
 
     for move in get_moves(grid, index, unperfect=True):
         grid |= 1 << move
-        all_moves.append(str(move))
+        played_moves.append(str(move))
 
         result = False
         if not loosing_hashtable.get(get_hash(grid, move)):
-            result = dfs(grid, move, all_moves, depth + 1)
+            result = dfs(grid, move, played_moves, depth + 1)
 
         # save the position as loosing
         if not result:
             loosing_hashtable[get_hash(grid, move)] = (grid, move)
 
-        all_moves.pop(-1)
+        played_moves.pop(-1)
         grid ^= 1 << move
 
     return False
