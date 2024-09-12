@@ -71,7 +71,7 @@ def show_grid(played_moves: list[int]) -> str:
     str_grid = ""
     for index in range(DIGITS_NUMBER):
         # get the turn the square has been filled
-        move = str(squares.get(str(index))) or "0"
+        move = str(squares.get(index)) or "0"
 
         # add space so that once the grid is printed, columns align nicely
         if len(move) == 1:
