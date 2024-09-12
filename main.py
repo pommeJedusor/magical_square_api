@@ -20,6 +20,18 @@ loosing_hashtable = {}
 moves_hashtable = {}
 # store in a list all the solutions found
 solutions = []
+nb_solutions = 0
+
+
+# save solutions in the solutions.txt file
+def save_solutions():
+    global nb_solutions, solutions
+    with open("solutions.txt", "a", encoding="utf8") as f:
+        for solution in solutions:
+            nb_solutions += 1
+            f.write(f"# solution {nb_solutions}:\n")
+            f.write(show_grid(solution))
+    solutions = []
 
 
 # a subgrid is of a square 'a' is the set of all the squares that 'a' can go to with only horizontal and vertical moves
@@ -155,7 +167,9 @@ def solve(grid: int, index: int, played_moves: list[int]) -> bool:
     # if grid is full
     if len(played_moves) == DIGITS_NUMBER:
         solutions.append(played_moves.copy())
-        print(len(solutions))
+        if len(solutions) == 500_000:
+            print(nb_solutions + 500_000)
+            save_solutions()
         return True
 
     # if the moves of the position has already been computed get from hashtable
@@ -186,11 +200,7 @@ def solve(grid: int, index: int, played_moves: list[int]) -> bool:
 
 
 if __name__ == "__main__":
+    with open("solutions.txt", "w") as f:
+        pass
     solve(1, 0, [0])
-    text = f"-- all solutions ({len(solutions)}) --\n"
-    for i in range(len(solutions)):
-        text += f"# solution {i+1}:\n"
-        text += show_grid(solutions[i])
-    print(text)
-    with open("./solutions.txt", "w", encoding="utf8") as f:
-        f.write(text)
+    save_solutions()
