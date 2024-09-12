@@ -16,6 +16,8 @@ TO_TOP_LEFT_OFFSET = -Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 
 # store in a dictionnary all the loosing positions
 loosing_hashtable = {}
+# store for each position the moves available to avoid recomputing them
+moves_hashtable = {}
 # store in a list all the solutions found
 solutions = []
 
@@ -59,17 +61,17 @@ def get_hash(grid: int, index: int) -> int:
     return grid | index << DIGITS_NUMBER
 
 
-def show_grid(played_moves: list[str]) -> str:
+def show_grid(played_moves: list[int]) -> str:
     # played_moves: turn -> move (index)
     # squares: index -> turn ("1" -> "100")
     squares = {}
     for i in range(len(played_moves)):
-        squares[played_moves[i]] = str(i + 1)
+        squares[played_moves[i]] = i + 1
 
     str_grid = ""
     for index in range(DIGITS_NUMBER):
         # get the turn the square has been filled
-        move = squares.get(str(index)) or "0"
+        move = str(squares.get(str(index))) or "0"
 
         # add space so that once the grid is printed, columns align nicely
         if len(move) == 1:
@@ -146,21 +148,24 @@ def get_moves(grid: int, index: int) -> list[int]:
     return indexes
 
 
-def solve(grid: int, index: int, played_moves: list[str]) -> bool:
+def solve(grid: int, index: int, played_moves: list[int]) -> bool:
     global loosing_hashtable, solutions
     is_winning = False
 
     # if grid is full
     if len(played_moves) == DIGITS_NUMBER:
         solutions.append(played_moves.copy())
-        print(show_grid(solutions[-1]))
         print(len(solutions))
         return True
 
-    for move in get_moves(grid, index):
+    # if the moves of the position has already been computed get from hashtable
+    moves = moves_hashtable.get(get_hash(grid, index)) or get_moves(grid, index)
+    # store the moves in the hashtable
+    moves_hashtable[get_hash(grid, index)] = moves
+    for move in moves:
         # make the move
         grid |= 1 << move
-        played_moves.append(str(move))
+        played_moves.append(move)
 
         result = False
         # go deeper if the position doesn't match any previous loosing position explored
@@ -169,7 +174,7 @@ def solve(grid: int, index: int, played_moves: list[str]) -> bool:
 
         # save the position as loosing
         if not result:
-            loosing_hashtable[get_hash(grid, move)] = (grid, move)
+            loosing_hashtable[get_hash(grid, move)] = True
         else:
             is_winning = True
 
@@ -181,7 +186,7 @@ def solve(grid: int, index: int, played_moves: list[str]) -> bool:
 
 
 if __name__ == "__main__":
-    solve(1, 0, ["0"])
+    solve(1, 0, [0])
     text = f"-- all solutions ({len(solutions)}) --\n"
     for i in range(len(solutions)):
         text += f"# solution {i+1}:\n"
