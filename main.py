@@ -16,6 +16,8 @@ TO_TOP_LEFT_OFFSET = -Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 
 # store in a dictionnary all the loosing positions
 loosing_hashtable = {}
+# store for each position the moves available to avoid recomputing them
+moves_hashtable = {}
 # store in a list all the solutions found
 solutions = []
 
@@ -157,7 +159,11 @@ def solve(grid: int, index: int, played_moves: list[str]) -> bool:
         print(len(solutions))
         return True
 
-    for move in get_moves(grid, index):
+    # if the moves of the position has already been computed get from hashtable
+    moves = moves_hashtable.get(get_hash(grid, index)) or get_moves(grid, index)
+    # store the moves in the hashtable
+    moves_hashtable[get_hash(grid, index)] = moves
+    for move in moves:
         # make the move
         grid |= 1 << move
         played_moves.append(str(move))
