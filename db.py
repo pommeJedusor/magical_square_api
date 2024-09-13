@@ -47,5 +47,28 @@ def insert_solutions(solutions: list[list[int]]) -> None:
     conn.close()
 
 
+def get_arrays_by_page(page: int, limit: int = 100):
+    conn = sqlite3.connect(DATABASE_NAME)
+    cursor = conn.cursor()
+
+    start_id = page * limit + 1
+    end_id = (page + 1) * limit
+
+    cursor.execute(
+        """
+        SELECT array_elements
+        FROM arrays
+        WHERE id BETWEEN ? AND ?
+    """,
+        (start_id, end_id),
+    )
+
+    results = cursor.fetchall()
+
+    conn.close()
+
+    return [row[0] for row in results]
+
+
 if __name__ == "__main__":
     main()
