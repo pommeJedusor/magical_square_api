@@ -9,9 +9,9 @@ def main() -> None:
     conn = sqlite3.connect(DATABASE_NAME)
     cursor = conn.cursor()
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS arrays (
+        CREATE TABLE IF NOT EXISTS solutions (
             id INTEGER PRIMARY KEY,
-            array_elements VARCHAR(200) NOT NULL UNIQUE
+            solution VARCHAR(200) NOT NULL UNIQUE
         )
     """)
 
@@ -37,7 +37,7 @@ def insert_solutions(solutions: list[list[int]]) -> None:
 
         cursor.execute(
             """
-            INSERT INTO arrays (array_elements)
+            INSERT INTO solutions (solution)
             VALUES (?)
         """,
             (formatted_solution,),
@@ -56,8 +56,8 @@ def get_arrays_by_page(page: int, limit: int = 100):
 
     cursor.execute(
         """
-        SELECT array_elements
-        FROM arrays
+        SELECT solution
+        FROM solutions
         WHERE id BETWEEN ? AND ?
     """,
         (start_id, end_id),
