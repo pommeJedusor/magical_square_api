@@ -1,0 +1,26 @@
+services:
+  arangodb:
+    image: arangodb
+    environment:
+      - ARANGO_ROOT_PASSWORD=root
+    volumes:
+      - ./arangodb-data/:/var/lib/arangodb3
+    networks:
+      - arangodb_network
+
+  magical_square_api:
+    image: pommejedusor/magical_square_api
+    ports:
+      - "9042:8080"
+    environment:
+      - DB_URL=http://arangodb:8529
+      - USERNAME=root
+      - PASSWORD=root
+    networks:
+      - arangodb_network
+    volumes:
+      - ./arangodb-data/:/var/lib/arangodb3
+
+networks:
+  arangodb_network:
+    driver: bridge
