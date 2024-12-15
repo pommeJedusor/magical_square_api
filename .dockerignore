@@ -1,0 +1,13 @@
+# python
+config.py
+main.py
+.venv/
+
+# git
+.git
+.gitignore
+LICENSE
+README.md
+
+# db
+arangodb-data/
