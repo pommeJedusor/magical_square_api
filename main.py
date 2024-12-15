@@ -220,8 +220,6 @@ def solve(grid: int, index: int, played_moves: list[int]) -> bool:
         played_moves.pop(-1)
         grid ^= 1 << move
 
-    if grid == 1:
-        print(previous_hash, grid, is_winning)
     if is_winning:
         node_doc = nodes.createDocument(
             {"_key": str(previous_hash), "hash": str(previous_hash)}
