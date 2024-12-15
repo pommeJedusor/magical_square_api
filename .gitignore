@@ -1,3 +1,4 @@
 solutions.txt
 __pycache__
 magical_square_db.db
+.venv/

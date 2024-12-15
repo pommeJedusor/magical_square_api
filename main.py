@@ -1,4 +1,32 @@
-from db import insert_solutions
+from pyArango.connection import *
+from pyArango.collection import Collection, Field, Edges
+
+# Set up the database connection and collections
+conn = Connection(username="root", password="root")
+db_name = "magical_square"
+
+if db_name not in conn:
+    db = conn.createDatabase(name=db_name)
+else:
+    db = conn[db_name]
+
+
+# Define the Nodes and Edges collections
+class Nodes(Collection):
+    _fields = {"hash": Field()}
+
+
+class Edges(Edges):
+    _fields = {"from_index": Field(), "to_index": Field()}
+
+
+if "Nodes" not in db.collections:
+    db.createCollection(name="Nodes", className="Nodes")
+if "Edges" not in db.collections:
+    db.createCollection(name="Edges", className="Edges")
+
+nodes = db["Nodes"]
+edges = db["Edges"]
 
 WIDTH = 10
 HEIGHT = 10
@@ -16,21 +44,11 @@ TO_BOTTOM_LEFT_OFFSET = Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 TO_TOP_RIGHT_OFFSET = -Y_DIAGONAL_OFFSET + X_DIAGONAL_OFFSET
 TO_TOP_LEFT_OFFSET = -Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 
-# store in a dictionnary all the loosing positions
 loosing_hashtable = {}
-# store for each position the moves available to avoid recomputing them
-moves_hashtable = {}
-# store in a list all the solutions found
-solutions = []
+winning_hashtable = {}
 nb_solutions = 0
 
 
-# a subgrid is of a square 'a' is the set of all the squares that 'a' can go to with only horizontal and vertical moves
-# e.g. in normal setting the subgrid of the square of index 0 is composed of the squares of indexes
-#  0,  3,  6,  9
-# 30, 33, 36, 39
-# 60, 63, 66, 69
-# 90, 93, 96, 99
 def is_subgrid_horizontal_line_filled(grid: int, index: int) -> bool:
     y_offset = index - index % WIDTH
     default_x_offset = index % WIDTH % HORIZONTAL_OFFSET
@@ -73,17 +91,14 @@ def show_grid(played_moves: list[int]) -> str:
 
     str_grid = ""
     for index in range(DIGITS_NUMBER):
-        # get the turn the square has been filled
         move = str(squares.get(index)) or "0"
 
-        # add space so that once the grid is printed, columns align nicely
         if len(move) == 1:
             move = "  " + move
         elif len(move) == 2:
             move = " " + move
         str_grid += " " + move + " "
 
-        # end of the row
         if index % WIDTH == WIDTH - 1:
             str_grid += "\n"
 
@@ -91,14 +106,10 @@ def show_grid(played_moves: list[int]) -> str:
 
 
 def get_moves(grid: int, index: int) -> list[int]:
-    # all the index that are available to go to
     indexes = []
 
     sub_grid_filled = is_sub_grid_filled(grid, index)
 
-    # wait until the subgrid is filled to move to the next subgrid
-    # it might prune some solutions but it allow to really fastly find a lot of solutions
-    # return horizontal and vertical if subgrid not filled and diagonal otherwise
     if sub_grid_filled:
         if (
             index + TO_BOTTOM_RIGHT_OFFSET < DIGITS_NUMBER
@@ -125,26 +136,22 @@ def get_moves(grid: int, index: int) -> list[int]:
         ):
             indexes.append(index - TO_TOP_RIGHT_OFFSET)
     else:
-        # right
         if (
             index + HORIZONTAL_OFFSET < DIGITS_NUMBER
             and index % WIDTH < 7
             and not grid & 1 << (index + HORIZONTAL_OFFSET)
         ):
             indexes.append(index + HORIZONTAL_OFFSET)
-        # left
         if (
             index - HORIZONTAL_OFFSET >= 0
             and index % WIDTH > 2
             and not grid & 1 << (index - HORIZONTAL_OFFSET)
         ):
             indexes.append(index - HORIZONTAL_OFFSET)
-        # down
         if index + VERTICAL_OFFSET < DIGITS_NUMBER and not grid & 1 << (
             index + VERTICAL_OFFSET
         ):
             indexes.append(index + VERTICAL_OFFSET)
-        # up
         if index - VERTICAL_OFFSET >= 0 and not grid & 1 << (index - VERTICAL_OFFSET):
             indexes.append(index - VERTICAL_OFFSET)
 
@@ -152,50 +159,76 @@ def get_moves(grid: int, index: int) -> list[int]:
 
 
 def solve(grid: int, index: int, played_moves: list[int]) -> bool:
-    global loosing_hashtable, solutions, nb_solutions
+    global loosing_hashtable, winning_hashtable, solutions, nb_solutions
     is_winning = False
+    previous_hash = get_hash(grid, index)
 
-    # if grid is full
-    if len(played_moves) == DIGITS_NUMBER:
-        solutions.append(played_moves.copy())
-        nb_solutions += 1
-        if len(solutions) == 500_000:
-            print(nb_solutions)
-            print("saving...")
-            # insert the current found solutions in db
-            insert_solutions(solutions)
-            # free the found solutions to free memory space
-            solutions = []
-            print("save done")
-        return True
-
-    # if the moves of the position has already been computed get from hashtable
-    moves = moves_hashtable.get(get_hash(grid, index)) or get_moves(grid, index)
-    # store the moves in the hashtable
-    moves_hashtable[get_hash(grid, index)] = moves
+    moves = get_moves(grid, index)
     for move in moves:
-        # make the move
         grid |= 1 << move
         played_moves.append(move)
+        hash = get_hash(grid, move)
 
-        result = False
-        # go deeper if the position doesn't match any previous loosing position explored
-        if not loosing_hashtable.get(get_hash(grid, move)):
-            result = solve(grid, move, played_moves)
-
-        # save the position as loosing
-        if not result:
-            loosing_hashtable[get_hash(grid, move)] = True
-        else:
+        if len(played_moves) == DIGITS_NUMBER:
             is_winning = True
+            played_moves.pop(-1)
+            grid ^= 1 << move
+            continue
 
-        # cancel the move
+        # if we know it's loosing we just skip it
+        if loosing_hashtable.get(hash):
+            played_moves.pop(-1)
+            grid ^= 1 << move
+            continue
+
+        # if we already have that pos we just make the link
+        if winning_hashtable.get(hash):
+            edge_doc = edges.createDocument(
+                {
+                    "_from": f"Nodes/{str(previous_hash)}",
+                    "_to": f"Nodes/{str(hash)}",
+                    "from_index": index,
+                    "to_index": move,
+                }
+            )
+            edge_doc.save()
+            played_moves.pop(-1)
+            grid ^= 1 << move
+            is_winning = True
+            continue
+
+        # if we find it's loosing we just save it as loosing
+        if not solve(grid, move, played_moves):
+            played_moves.pop(-1)
+            grid ^= 1 << move
+            loosing_hashtable[hash] = True
+            continue
+
+        # if we discover it's winning we create the grid node and the edge with the previous one
+        is_winning = True
+        winning_hashtable[hash] = True
+        edge_doc = edges.createDocument(
+            {
+                "_from": f"Nodes/{str(previous_hash)}",
+                "_to": f"Nodes/{str(hash)}",
+                "from_index": index,
+                "to_index": move,
+            }
+        )
+        edge_doc.save()
+
         played_moves.pop(-1)
         grid ^= 1 << move
 
+    if grid == 1:
+        print(previous_hash, grid, is_winning)
+    if is_winning:
+        node_doc = nodes.createDocument(
+            {"_key": str(previous_hash), "hash": str(previous_hash)}
+        )
+        node_doc.save()
     return is_winning
 
 
 if __name__ == "__main__":
     solve(1, 0, [0])
-    insert_solutions(solutions)
