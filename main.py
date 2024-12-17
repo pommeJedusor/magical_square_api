@@ -1,32 +1,5 @@
-from pyArango.connection import *
-from pyArango.collection import Collection, Field, Edges
+from typing import Dict, List
 
-# Set up the database connection and collections
-conn = Connection(username="root", password="root")
-db_name = "magical_square"
-
-if db_name not in conn:
-    db = conn.createDatabase(name=db_name)
-else:
-    db = conn[db_name]
-
-
-# Define the Nodes and Edges collections
-class Nodes(Collection):
-    _fields = {"hash": Field()}
-
-
-class Edges(Edges):
-    _fields = {"from_index": Field(), "to_index": Field()}
-
-
-if "Nodes" not in db.collections:
-    db.createCollection(name="Nodes", className="Nodes")
-if "Edges" not in db.collections:
-    db.createCollection(name="Edges", className="Edges")
-
-nodes = db["Nodes"]
-edges = db["Edges"]
 
 WIDTH = 10
 HEIGHT = 10
@@ -44,9 +17,17 @@ TO_BOTTOM_LEFT_OFFSET = Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 TO_TOP_RIGHT_OFFSET = -Y_DIAGONAL_OFFSET + X_DIAGONAL_OFFSET
 TO_TOP_LEFT_OFFSET = -Y_DIAGONAL_OFFSET - X_DIAGONAL_OFFSET
 
+
+class Position:
+    def __init__(self, hash: int, nb_sub_path: int, moves: List[int]):
+        self.hash = hash
+        self.nb_sub_path = nb_sub_path
+        self.moves = moves
+
+
 loosing_hashtable = {}
 winning_hashtable = {}
-nb_solutions = 0
+graph: Dict[int, Position] = {}
 
 
 def is_subgrid_horizontal_line_filled(grid: int, index: int) -> bool:
@@ -159,9 +140,10 @@ def get_moves(grid: int, index: int) -> list[int]:
 
 
 def solve(grid: int, index: int, played_moves: list[int]) -> bool:
-    global loosing_hashtable, winning_hashtable, solutions, nb_solutions
+    global loosing_hashtable, winning_hashtable, graph
     is_winning = False
     previous_hash = get_hash(grid, index)
+    previous_pos = Position(previous_hash, 1, [])
 
     moves = get_moves(grid, index)
     for move in moves:
@@ -170,6 +152,8 @@ def solve(grid: int, index: int, played_moves: list[int]) -> bool:
         hash = get_hash(grid, move)
 
         if len(played_moves) == DIGITS_NUMBER:
+            graph[hash] = Position(hash, 1, [])
+            previous_pos.moves.append(hash)
             is_winning = True
             played_moves.pop(-1)
             grid ^= 1 << move
@@ -183,15 +167,7 @@ def solve(grid: int, index: int, played_moves: list[int]) -> bool:
 
         # if we already have that pos we just make the link
         if winning_hashtable.get(hash):
-            edge_doc = edges.createDocument(
-                {
-                    "_from": f"Nodes/{str(previous_hash)}",
-                    "_to": f"Nodes/{str(hash)}",
-                    "from_index": index,
-                    "to_index": move,
-                }
-            )
-            edge_doc.save()
+            previous_pos.moves.append(hash)
             played_moves.pop(-1)
             grid ^= 1 << move
             is_winning = True
@@ -207,26 +183,53 @@ def solve(grid: int, index: int, played_moves: list[int]) -> bool:
         # if we discover it's winning we create the grid node and the edge with the previous one
         is_winning = True
         winning_hashtable[hash] = True
-        edge_doc = edges.createDocument(
-            {
-                "_from": f"Nodes/{str(previous_hash)}",
-                "_to": f"Nodes/{str(hash)}",
-                "from_index": index,
-                "to_index": move,
-            }
-        )
-        edge_doc.save()
+
+        previous_pos.moves.append(hash)
 
         played_moves.pop(-1)
         grid ^= 1 << move
 
     if is_winning:
-        node_doc = nodes.createDocument(
-            {"_key": str(previous_hash), "hash": str(previous_hash)}
+        graph[previous_hash] = previous_pos
+        previous_pos.nb_sub_path = sum(
+            [graph[child].nb_sub_path for child in previous_pos.moves]
         )
-        node_doc.save()
     return is_winning
+
+
+def get_move_from_hash(hash: int) -> int:
+    return hash >> 100
+
+
+def get_path(graph: Dict[int, Position], index: int = 0) -> List[int]:
+    assert index < 33938944 and index >= 0
+    path = [0]
+    node = graph[1]
+    while node.moves:
+        sum_path = 0
+        for move in node.moves:
+            if index < graph[move].nb_sub_path + sum_path:
+                index -= sum_path
+                node = graph[move]
+                path.append(get_move_from_hash(move))
+                break
+            else:
+                sum_path += graph[move].nb_sub_path
+    return path
+
+
+def get_graph() -> Dict[int, Position]:
+    global loosing_hashtable, winning_hashtable, graph
+    if not graph:
+        solve(1, 0, [0])
+    return graph
+
+
+def get_moves_from_graph(graph: Dict[int, Position], hash: int) -> List[int]:
+    node = graph[hash]
+    return [get_move_from_hash(move) for move in node.moves]
 
 
 if __name__ == "__main__":
     solve(1, 0, [0])
+    print(show_grid(get_path(1, 33938943)))
