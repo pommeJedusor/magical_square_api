@@ -11,6 +11,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             if not is_valid:
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "Hash not valid"}).encode())
                 return
@@ -22,6 +23,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             except:
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "Hash not valid"}).encode())
                 return
@@ -38,6 +40,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             if not is_valid or int(index) > 33938943:
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
+                self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "path index not valid"}).encode())
                 return
