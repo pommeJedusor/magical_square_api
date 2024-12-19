@@ -12,6 +12,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "max-age=604800")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "Hash not valid"}).encode())
                 return
@@ -24,6 +25,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "max-age=604800")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "Hash not valid"}).encode())
                 return
@@ -31,6 +33,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "max-age=604800")
             self.end_headers()
             self.wfile.write(json.dumps(moves).encode())
 
@@ -41,6 +44,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(400)
                 self.send_header("Content-type", "application/json")
                 self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Cache-Control", "max-age=604800")
                 self.end_headers()
                 self.wfile.write(json.dumps({"error": "path index not valid"}).encode())
                 return
@@ -51,6 +55,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "max-age=604800")
             self.end_headers()
             self.wfile.write(json.dumps(moves).encode())
 
