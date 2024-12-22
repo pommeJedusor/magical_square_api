@@ -58,6 +58,13 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_header("Cache-Control", "max-age=604800")
             self.end_headers()
             self.wfile.write(json.dumps(moves).encode())
+        else:
+            self.send_response(404)
+            self.send_header("Content-type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.send_header("Cache-Control", "max-age=604800")
+            self.end_headers()
+            self.wfile.write(json.dumps({"error": "path not valid"}).encode())
 
 
 def run(server_class=HTTPServer, handler_class=RequestHandler, port=8080):
